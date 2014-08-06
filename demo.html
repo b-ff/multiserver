@@ -4,50 +4,64 @@
     <title>MultiServer DEMO</title>
 
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap-theme.min.css">
   </head>
 
   <body>
-    
-  <div class="column client c1">
-    <div class="data">
-      <table>
-        <tr class="headers">
-          <td class="id">ID</td>
-          <td class="name">Name</td>
-          <td class="position">Position</td>
-          <td class="actions"><button class="delete"></button></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-    
-  <div class="column client c2">
-    <div class="data">
-      <table>
-        <tr class="headers">
-          <td class="id">ID</td>
-          <td class="name">Name</td>
-          <td class="position">Position</td>
-          <td class="actions"><button class="delete"></button></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-    
-  <div class="column server">
-    <div class="data">
-      <table>
-        <tr class="headers">
-          <td class="id"></td>
-          <td class="name"></td>
-          <td class="position"></td>
-        </tr>
-      </table>
-    </div>
-  </div>
 
+<div class="row">
+  <div class="list clientcol-xs-4 col-sm-4 col-md-4 col-lg-4 c1">
+    <div class="data">
+      <table class="table">
+        <tr class="headers">
+          <th class="id">ID</td>
+          <th class="name">Name</td>
+          <th class="position">Position</td>
+          <th class="actions"></td>
+        </tr>
+        <tr class="headers">
+          <td class="id">ID</td>
+          <td class="name">Name</td>
+          <td class="position">Position</td>
+          <td class="actions">
+            <button class="edit btn btn-default glyphicon glyphicon-pencil"></button>
+            <button class="delete btn btn-default glyphicon glyphicon-remove"></button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+    
+  <div class="list clientcol-xs-4 col-sm-4 col-md-4 col-lg-4 c2">
+    <div class="data">
+      <table class="table">
+        <tr class="headers">
+          <th class="id">ID</td>
+          <th class="name">Name</td>
+          <th class="position">Position</td>
+          <th class="actions"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+    
+  <div class="list server readonly col-xs-4 col-sm-4 col-md-4 col-lg-4">
+    <div class="data">
+      <table class="table">
+        <tr class="headers">
+          <th class="id">ID</td>
+          <th class="name">Name</td>
+          <th class="position">Position</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
 
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
 
     <script type="text/javascript" src="js/db.js"></script>
     <script type="text/javascript" src="js/client.js"></script>
