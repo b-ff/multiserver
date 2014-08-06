@@ -3,11 +3,54 @@
   <head>
     <title>MultiServer DEMO</title>
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
   </head>
 
   <body>
     
+  <div class="column client c1">
+    <div class="data">
+      <table>
+        <tr class="headers">
+          <td class="id">ID</td>
+          <td class="name">Name</td>
+          <td class="position">Position</td>
+          <td class="actions"><button class="delete"></button></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+    
+  <div class="column client c2">
+    <div class="data">
+      <table>
+        <tr class="headers">
+          <td class="id">ID</td>
+          <td class="name">Name</td>
+          <td class="position">Position</td>
+          <td class="actions"><button class="delete"></button></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+    
+  <div class="column server">
+    <div class="data">
+      <table>
+        <tr class="headers">
+          <td class="id"></td>
+          <td class="name"></td>
+          <td class="position"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+    <script type="text/javascript" src="js/db.js"></script>
+    <script type="text/javascript" src="js/client.js"></script>
+    <script type="text/javascript" src="js/server.js"></script>
   </body>
 </html>
