@@ -5,24 +5,37 @@ body {
 
 body .row {
 	height: 100%;
-	margin: 0px;
+	/*margin: 0px;*/
 }
 
 div.col-md-4 {
 	height: 100%;
 	overflow-y: auto;
 	box-shadow: inset 0px 0px 1px 0px #eee;
-	padding: 0px;
+	/*padding: 0px;*/
 }
 
-table th {
+table tr.headers {
 	background: rgba(220, 220, 220, 0.1);
 }
 
-table tr button.btn {
+table tbody tr button.btn {
 	visibility: hidden;
 }
 
-table tr:hover button.btn {
+table tbody tr:hover button.btn {
 	visibility: visible;
+}
+
+table thead tr button.btn {
+	visibility: hidden;
+}
+
+table:hover thead tr button.btn {
+	visibility: visible;
+}
+
+table.server tbody tr:hover button.btn,
+table.server:hover thead tr button.btn {
+	visibility: hidden;
 }
