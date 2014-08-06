@@ -1,10 +1,12 @@
 html,
 body {
 	height: 100%;
+	overflow-x: hidden;
 }
 
 body .row {
 	height: 100%;
+	overflow-y: auto;
 	/*margin: 0px;*/
 }
 
@@ -26,16 +28,18 @@ table tbody tr button.btn {
 table tbody tr:hover button.btn {
 	visibility: visible;
 }
-
+/*
 table thead tr button.btn {
 	visibility: hidden;
 }
 
 table:hover thead tr button.btn {
 	visibility: visible;
-}
+}*/
 
+table.server tbody tr button.btn,
 table.server tbody tr:hover button.btn,
+table.server thead tr button.btn,
 table.server:hover thead tr button.btn {
 	visibility: hidden;
 }

@@ -43,7 +43,7 @@ Server.prototype.triggerEvent = function(eventType, eventData) {
 	if (typeof this.callbacks[eventType] != "undefined") {
 		// Для каждого пользовательского обработчика
 		for (var i = 0; i < this.callbacks[eventType].length; i++) {
-			// Если это действительно обработчик, а то мало-ли, вон женщини с бородой... такое время...
+			// Если это действительно функция-обработчик, а то мало-ли, вон женщины с бородой... такое время, что никому нельзя верить...
 			if (typeof this.callbacks[eventType][i] == "function") {
 				// Выполняем его, передав какие-то данные события
 				this.callbacks[eventType][i](eventData);
@@ -53,7 +53,7 @@ Server.prototype.triggerEvent = function(eventType, eventData) {
 }
 
 Server.prototype.getList = function() {
-	return this.data;
+	return this.data.slice(0);
 };
 
 
