@@ -98,7 +98,7 @@ ListController.prototype.getItemByRow = function(row) {
 			// Если это не ячейка строки с действиями
 			if (propName != "actions") {
 				// то дополняем наш объект элемента списка свойством со значением
-				item[propName] = jQuery(this).text();
+				item[propName] = (propName == "id" || propName == "position") ? parseInt(jQuery(this).text()) : jQuery(this).text();
 			}
 		});
 		// Возвращаем сформированный объект элемента списка
@@ -155,25 +155,53 @@ ListController.prototype.updateBufferItem = function(item) {
 }
 
 // Метод для удаления элемента списка
-ListController.prototype.removeItem = function(id) {
+ListController.prototype.removeItemRow = function(id) {
 	// Получаем DOM-строку элемента по его ID
 	var row = this.getRowById(id);
 	// Удаляем строку из списка
 	row.remove();
+}
+
+// Метод для удаления элемента
+ListController.prototype.removeItem = function(id) {
+	// Удаляем элемент из списка
+	this.removeItemRow(id);
 	// Удаляем элемент из буфера
 	this.removeBufferItemById(id);
 	// Добавляем ID элемента в очередь на удаление
 	this.deleteQueue.push(id);
 	// Запускаем таймер на отправку данных на сервер
-	this.timeout(function() {
-		// TODO
-		// this.info("Deleting was runed on the server!");
-		console.log(this);
-	}, 5000);
+	this.timeout(jQuery.proxy(this.send, this), 5000);
 }
+
+ListController.prototype.send = function() {
+	this.server.delete(this.deleteQueue);
+	this.server.create(this.createQueue);
+	this.server.update(this.updateQueue);
+
+	delete this.deleteQueue;
+	delete this.createQueue;
+	delete this.updateQueue;
+
+	this.deleteQueue = new Array();
+	this.createQueue = new Array();
+	this.updateQueue = new Array();
+};
 
 // Метод предназначеный для навешивания обработчиков на элементы списка
 ListController.prototype.attachHandlers = function() {
+
+	// Подписываемся на событие удаления на сервере
+	this.server.on('delete', $.proxy(function(data) {
+		// Для каждого ID из набора возвращённого сервером
+		for (var i = 0; i < data.length; i++) {
+			// Удаляем элемент с ID из буфера
+			this.removeBufferItemById(data[i]);
+			// Удаляем элемент с ID из списка
+			this.removeItemRow(data[i]);
+		};
+	}, this));
+
 	this.container.on("click", "button.delete", jQuery.proxy(function(event) {
 
 		var button = this.container.find(event.currentTarget);

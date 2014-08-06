@@ -53,7 +53,39 @@ Server.prototype.triggerEvent = function(eventType, eventData) {
 }
 
 Server.prototype.getList = function() {
+	// Возвращаем клонированный в памяти массив, чтобы данные API сервера не были взаимосвязаны с буфером контроллера списка пользователя
 	return this.data.slice(0);
 };
 
+// Метод для добавления элементов на сервере
+Server.prototype.create = function(data) {
+	
+	/*
+	 *	Тут происходит уход запроса на сервер...
+	 */
 
+	// Вызываем пользовательские обработчики для события
+	this.triggerEvent('create', data);
+}
+
+// Метод для обновления элементов на сервере
+Server.prototype.update = function(data) {
+	
+	/*
+	 *	Тут происходит уход запроса на сервер...
+	 */
+
+	// Вызываем пользовательские обработчики для события
+	this.triggerEvent('update', data);
+}
+
+// Метод для удаления элементов на сервере
+Server.prototype.delete = function(data) {
+	
+	/*
+	 *	Тут происходит уход запроса на сервер...
+	 */
+
+	// Вызываем пользовательские обработчики для события
+	this.triggerEvent('delete', data);
+}
