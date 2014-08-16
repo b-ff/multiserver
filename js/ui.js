@@ -2,8 +2,32 @@
 
 	MultiServer = new Server();
 
-	client1 = new ListController(".list.client1", MultiServer);
-	client2 = new ListController(".list.client2", MultiServer);
-	serverViewer = new ListController(".list.server", MultiServer);
+	Users = {}
+
+	jQuery("table.list").each(function() {
+
+		var role = jQuery(this).attr("data-role");
+
+		if (typeof role != "undefined" && role != "") {
+			Users[role] = new ListController(jQuery(this), MultiServer);
+		}
+
+	});
+
+	jQuery(".btn.add").on("click", function(event) {
+
+		var editor = jQuery(".editor").filter(":eq("+jQuery(this).index(".btn.add")+")");
+
+		editor.find("button").unbind("click");
+		editor.find("input#id-field").val("");
+		editor.find("input#name-field").val("");
+		editor.find("input#position-field").val("");
+
+		editor.stop().slideDown(function() {
+			$(this).find("#name-field").focus();
+		});
+
+		return false;
+	});
 
 })(jQuery);

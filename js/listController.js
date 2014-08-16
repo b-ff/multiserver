@@ -14,6 +14,8 @@ function ListController(container, server) {
 
 	this.server = server;
 
+	this.userToken = this.server.getUserToken();
+
 	this.load();
 
 	this.renderList();
@@ -37,7 +39,7 @@ ListController.prototype.timeout = function(func, delay) {
 		clearTimeout(this.timeout.timeoutID);
 	}
 
-	this.timeout.timeoutID = setTimeout(jQuery.proxy(function() {
+	this.timeout.timeoutID = setTimeout($.proxy(function() {
 		func();
 		delete this.timeout.timeoutID;
 	}, this), delay);
@@ -171,7 +173,7 @@ ListController.prototype.removeItem = function(id) {
 	// Добавляем ID элемента в очередь на удаление
 	this.deleteQueue.push(id);
 	// Запускаем таймер на отправку данных на сервер
-	this.timeout(jQuery.proxy(this.send, this), 5000);
+	this.timeout($.proxy(this.send, this), 5000);
 }
 
 ListController.prototype.send = function() {
@@ -202,7 +204,27 @@ ListController.prototype.attachHandlers = function() {
 		};
 	}, this));
 
-	this.container.on("click", "button.delete", jQuery.proxy(function(event) {
+	// Подписываемся на событие начала редактирования элемента на сервере
+	this.server.on('edit', $.proxy(function(data) {
+
+		this.container.find(".list-item").each(function() {
+			if (jQuery(this).hasClass("warning")) {
+				jQuery(this).removeClass("warning");
+			}
+		});
+
+		for (var i = 0; i < data.length; i++) {
+			if (data[i].token != this.userToken) {
+				var row = this.getRowById(data[i].id);
+				row.addClass("warning");
+				row.find("button").addClass("disabled");
+			}
+		};
+
+	}, this));
+
+	// Вешаем обработчик на кнопку списка
+	this.container.on("click", "button.delete", $.proxy(function(event) {
 
 		var button = this.container.find(event.currentTarget);
 		button.addClass("disabled");
@@ -210,6 +232,31 @@ ListController.prototype.attachHandlers = function() {
 		var item = this.getItemByRow(row);
 
 		this.removeItem(item.id);
+
+	}, this));
+
+	// Вешаем обработчик на кнопку списка
+	this.container.on("click", "button.edit", $.proxy(function(event) {
+
+		var button = this.container.find(event.currentTarget);
+		var row = button.parent().parent();
+		var item = this.getItemByRow(row);
+
+		row.addClass("info");
+		this.container.find("button.edit").addClass("disabled");
+
+		var editor = this.container.parent().parent().find(".editor");
+
+		editor.find("button").unbind("click");
+		editor.find("input#id-field").val(item.id);
+		editor.find("input#name-field").val(item.name);
+		editor.find("input#position-field").val(item.position);
+
+		editor.stop().slideDown(function() {
+			$(this).find("#name-field").focus();
+		});
+
+		this.server.lock(item.id, this.userToken);
 
 	}, this));
 }

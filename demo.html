@@ -10,10 +10,49 @@
 
   <body>
 
-<div class="row">
+<div class="row columns">
   <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+    <form role="form" class="form editor">
+      <input type="hidden" id="id-field" name="id" value="">
+      <div class="form-group">
+        <input type="text" id="name-field" name="name" placeholder="Name..." value="" />
+      </div>
+      <div class="form-group">
+        <input type="text" id="position-field" name="position" placeholder="Position..." value="" />
+      </div>
+      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-remove"></span> Отменить</button>
+      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-floppy-save"></span> Сохранить</button>
+    </form>    
     <div class="data">
-      <table class="table list client client1">
+      <table class="table list client client1" data-role="client1">
+        <thead>
+          <tr>
+            <th class="id">ID</th>
+            <th class="name">Name</th>
+            <th class="position">Position</th>
+            <th class="actions"><button class="add btn btn-default"><span class="glyphicon glyphicon-plus"></span> Добавить</button></th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+    
+  <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+    <form role="form" class="form editor">
+      <input type="hidden" id="id-field" name="id" value="">
+      <div class="form-group">
+        <input type="text" id="name-field" name="name" placeholder="Name..." value="" />
+      </div>
+      <div class="form-group">
+        <input type="text" id="position-field" name="position" placeholder="Position..." value="" />
+      </div>
+      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-remove"></span> Отменить</button>
+      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-floppy-save"></span> Сохранить</button>
+    </form>    
+    <div class="data">
+      <table class="table list client client2" data-role="client2">
         <thead>
           <tr>
             <th class="id">ID</th>
@@ -30,24 +69,7 @@
     
   <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
     <div class="data">
-      <table class="table list client client2">
-        <thead>
-          <tr>
-            <th class="id">ID</th>
-            <th class="name">Name</th>
-            <th class="position">Position</th>
-            <th class="actions"><button class="add btn btn-default"><span class="glyphicon glyphicon-plus"></span> Добавить</button></th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </div>
-  </div>
-    
-  <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-    <div class="data">
-      <table class="table list server readonly">
+      <table class="table list server readonly" data-role="server">
         <thead>
           <tr>
             <th class="id">ID</th>

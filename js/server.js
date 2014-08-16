@@ -2,15 +2,28 @@ function Server() {
 	// ...Init...
 }
 
+Server.prototype.users = [];
+
 Server.prototype.data = DB;
 
 Server.prototype.edit = 	[]; // Массив хранящий id записей которые редактируются в настоящее время
 
 // Объект хранящий массивы пользовательских обработчиков по событиям
 Server.prototype.callbacks = {
+	"create"	: [], // создание
 	"edit"		: [], // начало изменения
+	"editcancel": [], // отмена изменения
 	"update"	: [], // окончание изменения
 	"delete"	: []  // удаление
+}
+
+Server.prototype.getUserToken = function() {
+	var token = new Date().getTime();
+	token = token.toString() + (Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000);
+
+	this.users.push(token);
+
+	return token;
 }
 
 // Метод аля jQuery для навешивания обработчиков на события сервера
@@ -23,6 +36,10 @@ Server.prototype.on = function(eventType, callback) {
 }
 
 // Синтаксический сахар
+
+Server.prototype.onCreate = function(callback) {
+	this.on("create", callback);
+}
 
 Server.prototype.onEdit = function(callback) {
 	this.on("edit", callback);
@@ -88,4 +105,34 @@ Server.prototype.delete = function(data) {
 
 	// Вызываем пользовательские обработчики для события
 	this.triggerEvent('delete', data);
+}
+
+// Метод для блокировки элементов на сервере
+Server.prototype.lock = function(item_id, user_token) {
+	
+	/*
+	 *	Тут происходит уход запроса на сервер...
+	 */
+
+	for (var i = 0; i < this.edit.length; i++) {
+		if (this.edit[i].id == item_id) { return false; }
+	};
+
+	this.edit.push({ id: item_id, token: user_token });
+
+	// Вызываем пользовательские обработчики для события
+	this.triggerEvent('edit', this.edit);
+
+	return true;
+}
+
+// Метод для блокировки элементов на сервере
+Server.prototype.unlock = function(item_id, user_token) {
+	
+	/*
+	 *	Тут происходит уход запроса на сервер...
+	 */
+
+	// Вызываем пользовательские обработчики для события
+	this.triggerEvent('editcancel', data);
 }
