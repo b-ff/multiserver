@@ -31,7 +31,7 @@
 		Users.server.load();
 		Users.server.container.find("tbody").empty();
 		Users.server.renderList();
-		Users.server.attachHandlers();	
+		// Users.server.attachHandlers();	
 		Users.server.info("Server data refreshed");	
 	}, 1000);
 

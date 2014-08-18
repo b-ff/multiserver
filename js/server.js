@@ -104,6 +104,8 @@ Server.prototype.getListIndexById = function(id) {
 	for (var i = 0; i < this.data.length; i++) {
 		if (this.data[i].id == id) { return i; }
 	};
+
+	return false
 }
 
 // Метод для добавления элементов на сервере
@@ -159,6 +161,15 @@ Server.prototype.delete = function(data, userToken) {
 	 *	Тут происходит уход запроса на сервер...
 	 */
 
+	for (var i = 0; i < data.length; i++) {
+		var DBIndex = this.getListIndexById(data[i]);
+
+		if (DBIndex) {
+			this.info("Server: deleting item #"+DBIndex+" from DB");
+			this.info(this.data[DBIndex]);
+			this.data.splice(DBIndex, 1);	
+		}
+	};
 
 
 	// Вызываем пользовательские обработчики для события

@@ -21,6 +21,8 @@ function ListController(container, server) {
 	this.renderList();
 
 	this.attachHandlers();
+
+	setInterval($.proxy(this.renderBufferLog, this), 250);
 }
 
 ListController.prototype = new BaseController();
@@ -144,6 +146,8 @@ ListController.prototype.getBufferIndexById = function(id) {
 	for (var i = 0; i < this.buffer.length; i++) {
 		if (this.buffer[i].id == id) { return i; }
 	};
+
+	return false;
 }
 
 // Получить объект элемента буфера по его ID
@@ -302,7 +306,20 @@ ListController.prototype.resetNewLines = function() {
 	this.container.find(".list-item.success").removeClass("success");
 }
 
+// Рендерит содержимое буфера для вывода в буфер-логе
+ListController.prototype.renderBufferLog = function() {
+	var output = 'Buffer Log:';
+	output+= '<br>==============<br>';
 
+	for (var i = 0; i < this.buffer.length; i++) {
+		if (i != 0) {
+			output+='<br>';
+		}
+		output+='id: '+this.buffer[i].id+' | name: '+this.buffer[i].name+' | position: '+this.buffer[i].position;
+	};
+
+	this.container.parent().find(".buffer.log").html(output);
+}
 
 // Метод предназначеный для навешивания обработчиков на элементы списка
 ListController.prototype.attachHandlers = function() {
@@ -350,6 +367,11 @@ ListController.prototype.attachHandlers = function() {
 
 		this.info(this.container.attr("data-role") + ": trying to create those " + data.length + " elements:");
 		for (var i = 0; i < data.length; i++) {
+			// Если элемента нет в буфере
+			if (!this.getBufferIndexById(data[i].id)) {
+				this.buffer.push(data[i]);
+			}
+			// Если элемента нет в списке
 			if (!this.getRowById(data[i].id).size()) {
 				// Получаем новый порядковый номер для создаваемой строки
 				var num = this.container.find("tbody").find(".list-item").size() + 1;
