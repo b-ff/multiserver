@@ -2,6 +2,8 @@ function Server() {
 	// ...Init...
 }
 
+Server.prototype = new BaseController();
+
 Server.prototype.users = [];
 
 Server.prototype.data = DB;
@@ -12,7 +14,7 @@ Server.prototype.edit = 	[]; // Массив хранящий id записей 
 Server.prototype.callbacks = {
 	"create"	: [], // создание
 	"edit"		: [], // начало изменения
-	"editcancel": [], // отмена изменения
+	"unlock"	: [], // отмена изменения
 	"update"	: [], // окончание изменения
 	"delete"	: []  // удаление
 }
@@ -75,8 +77,10 @@ Server.prototype.getList = function() {
 };
 
 // Метод для добавления элементов на сервере
-Server.prototype.create = function(data) {
+Server.prototype.create = function(data, userToken) {
 	
+	this.info("Server: create task runned!");
+
 	/*
 	 *	Тут происходит уход запроса на сервер...
 	 */
@@ -86,19 +90,28 @@ Server.prototype.create = function(data) {
 }
 
 // Метод для обновления элементов на сервере
-Server.prototype.update = function(data) {
+Server.prototype.update = function(data, userToken) {
 	
+	this.info("Server: update task runned!");
+
 	/*
 	 *	Тут происходит уход запроса на сервер...
 	 */
+
+	for (var i = 0; i < data.length; i++) {
+		this.info("Server: unlocking element "+data[i].id);
+		this.unlock(data[i].id, userToken);
+	};
 
 	// Вызываем пользовательские обработчики для события
 	this.triggerEvent('update', data);
 }
 
 // Метод для удаления элементов на сервере
-Server.prototype.delete = function(data) {
+Server.prototype.delete = function(data, userToken) {
 	
+	this.info("Server: delete task runned!");
+
 	/*
 	 *	Тут происходит уход запроса на сервер...
 	 */
@@ -110,6 +123,8 @@ Server.prototype.delete = function(data) {
 // Метод для блокировки элементов на сервере
 Server.prototype.lock = function(item_id, user_token) {
 	
+	this.info("Server: lock task runned!");
+
 	/*
 	 *	Тут происходит уход запроса на сервер...
 	 */
@@ -121,7 +136,8 @@ Server.prototype.lock = function(item_id, user_token) {
 	this.edit.push({ id: item_id, token: user_token });
 
 	// Вызываем пользовательские обработчики для события
-	this.triggerEvent('edit', this.edit);
+	// this.triggerEvent('edit', this.edit);
+	this.triggerEvent('edit', item_id);
 
 	return true;
 }
@@ -129,10 +145,28 @@ Server.prototype.lock = function(item_id, user_token) {
 // Метод для блокировки элементов на сервере
 Server.prototype.unlock = function(item_id, user_token) {
 	
+	this.info("Server: unlock task runned!");
+
 	/*
 	 *	Тут происходит уход запроса на сервер...
 	 */
 
-	// Вызываем пользовательские обработчики для события
-	this.triggerEvent('editcancel', data);
+	var index = null;
+
+	for (var i = 0; i < this.edit.length; i++) {
+		if (this.edit[i].id == item_id) {
+			index = i;
+		}
+	};
+
+	if (index != null && this.edit[index].token == user_token) {
+		// Удаляем элемент из списка редактируемых
+		this.edit.splice(index, 1);
+		// Вызываем пользовательские обработчики для события
+		this.triggerEvent('unlock', item_id);
+		// Возвращаем "ок"
+		return true;
+	}
+
+	return false;
 }

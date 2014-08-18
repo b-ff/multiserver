@@ -50,6 +50,21 @@ ListController.prototype.load = function() {
 	this.buffer = this.server.getList();
 };
 
+// Отправляет содержимое буферов на сервер и затем очищает их
+ListController.prototype.send = function() {
+	this.server.delete(this.deleteQueue, this.userToken);
+	this.server.create(this.createQueue, this.userToken);
+	this.server.update(this.updateQueue, this.userToken);
+
+	delete this.deleteQueue;
+	delete this.createQueue;
+	delete this.updateQueue;
+
+	this.deleteQueue = new Array();
+	this.createQueue = new Array();
+	this.updateQueue = new Array();
+};
+
 // Рендерит свойство элемента списка
 ListController.prototype.renderItemProperty = function(name, value) {
 	return '<td class="property property-' + name + ((value == '') ? ' empty' : '') + '" data-property-name="' + name + '">' + value + '</td>';
@@ -61,7 +76,7 @@ ListController.prototype.renderList = function() {
 	var output = '';
 
 	for (var i = 0; i < this.buffer.length; i++) {
-		output+='<tr class="list-item list-item-' + this.buffer[i].id + '">';
+		output+='<tr class="list-item list-item-' + i + ' list-item-id-' + this.buffer[i].id + '">';
 
 		for (property in this.buffer[i]) {
 			output+=this.renderItemProperty(property, this.buffer[i][property]);
@@ -80,7 +95,7 @@ ListController.prototype.renderList = function() {
 
 // Получить DOM-строку списка по ID
 ListController.prototype.getRowById = function(id) {
-	return this.container.find(".list-item-"+id);
+	return this.container.find(".list-item-id-"+id);
 }
 
 // Получить объект элемента списка по его DOM-строке
@@ -176,19 +191,88 @@ ListController.prototype.removeItem = function(id) {
 	this.timeout($.proxy(this.send, this), 5000);
 }
 
-ListController.prototype.send = function() {
-	this.server.delete(this.deleteQueue);
-	this.server.create(this.createQueue);
-	this.server.update(this.updateQueue);
+// Переопределяемый метод
+ListController.prototype.edit = function(itemObject) {
+	// ...
+}
 
-	delete this.deleteQueue;
-	delete this.createQueue;
-	delete this.updateQueue;
+// Переопределятор предыдущего метода
+ListController.prototype.onEdit = function(callback) {
+	this.edit = callback;
+}
 
-	this.deleteQueue = new Array();
-	this.createQueue = new Array();
-	this.updateQueue = new Array();
-};
+// Метод обновляющий значение заданного поля в указанной строке
+ListController.prototype.setPropertyValue = function(row, propertyName, value) {
+
+	// row может быть объектом jQuery, порядковым номером или селектором (в т.ч. множественным) строки списка
+	row = (row instanceof jQuery) ? row : (typeof row == "number") ? this.container.find(".list-item-"+row) : this.container.find(row);
+
+	// Если строка действительно нашлась
+	if (row.size()) {
+		var propertyField = row.find(".property-"+propertyName);
+
+		// И у неё даже есть такое свойство
+		if (propertyField.size()) {
+			// Обновляем его значение
+			propertyField.text(value);
+		} else {
+			this.error("Update property error! Wrong property name '"+propertyName+"'!");
+		}
+	} else {
+		this.error("Update property error! Can't find selected row in list!");
+	}
+}
+
+// Обновляет элемент списка по ID в переданном объекте элемента
+ListController.prototype.updateBufferItem = function(itemObject) {
+	var bufferIndex = this.getBufferIndexById(itemObject.id);
+
+	this.buffer[bufferIndex] = itemObject;
+}
+
+// Обновляет элемент списка по ID в переданном объекте элемента
+ListController.prototype.updateItem = function(itemObject) {
+	var row = this.getRowById(itemObject.id);
+
+	// Обновляем элемент в буффере
+	this.updateBufferItem(itemObject);
+
+	// Обновляем элемент в списке
+	for (propertyName in itemObject) {
+		this.setPropertyValue(row, propertyName, itemObject[propertyName]);
+	}
+
+	// Если это мы редактировали элемент то шлём изменения в очередь и потом на сервер
+	if (row.hasClass("info")) {
+		// Добавляем ID элемента в очередь на удаление
+		this.updateQueue.push(itemObject);
+		// Запускаем таймер на отправку данных на сервер
+		this.timeout($.proxy(this.send, this), 5000);
+	}
+
+	row.removeClass("info");
+}
+
+// Создаёт новый элемент списка из полученного объекта
+ListController.prototype.createItem = function(itemObject) {
+	// ...
+}
+
+// Обёртка для серверного метода блокировки элемента при редактировании
+// Предназначена для того, чтобы изолировать userToken от использования в API на стороне
+ListController.prototype.lock = function(id) {
+	if (!this.server.lock(id, this.userToken)) {
+		this.error("List item #"+id+" is already editing!");
+	}
+}
+
+// Обёртка для серверного метода разблокировки элемента при окончании редактирования
+// Предназначена для того, чтобы изолировать userToken от использования в API на стороне
+ListController.prototype.unlock = function(id) {
+	if (!this.server.unlock(id, this.userToken)) {
+		this.error("You cannot unlock this list item if someone other edit it!");
+	}
+}
 
 // Метод предназначеный для навешивания обработчиков на элементы списка
 ListController.prototype.attachHandlers = function() {
@@ -205,20 +289,41 @@ ListController.prototype.attachHandlers = function() {
 	}, this));
 
 	// Подписываемся на событие начала редактирования элемента на сервере
-	this.server.on('edit', $.proxy(function(data) {
+	this.server.on('edit', $.proxy(function(item_id) {
 
-		this.container.find(".list-item").each(function() {
-			if (jQuery(this).hasClass("warning")) {
-				jQuery(this).removeClass("warning");
-			}
-		});
+		var row = this.getRowById(item_id);
+		if (!row.hasClass("info")) {
+			row.addClass("warning");
+			row.find("button").addClass("disabled");
+		}
 
+	}, this));
+
+
+	// Подписываемся на событие окончания редактирования редактирования элемента на сервере
+	this.server.on('unlock', $.proxy(function(item_id) {
+
+		var row = this.getRowById(item_id);
+		
+		if (row.hasClass("warning")) {
+			row.removeClass("warning");
+		}
+		
+		if (row.hasClass("info")) {
+			row.removeClass("info");
+		}
+
+		this.container.find(".list-item").not(".warning").find("button").removeClass("disabled");
+
+	}, this));
+
+	// Подписываемся на событие обновления элемента
+	this.server.on('update', $.proxy(function(data) {
+
+		this.info(this.container.attr("data-role") + ": trying to update those " + data.length + " elements:");
 		for (var i = 0; i < data.length; i++) {
-			if (data[i].token != this.userToken) {
-				var row = this.getRowById(data[i].id);
-				row.addClass("warning");
-				row.find("button").addClass("disabled");
-			}
+			this.info(data[i]);
+			this.updateItem(data[i]);
 		};
 
 	}, this));
@@ -245,18 +350,9 @@ ListController.prototype.attachHandlers = function() {
 		row.addClass("info");
 		this.container.find("button.edit").addClass("disabled");
 
-		var editor = this.container.parent().parent().find(".editor");
+		this.edit(item);
 
-		editor.find("button").unbind("click");
-		editor.find("input#id-field").val(item.id);
-		editor.find("input#name-field").val(item.name);
-		editor.find("input#position-field").val(item.position);
-
-		editor.stop().slideDown(function() {
-			$(this).find("#name-field").focus();
-		});
-
-		this.server.lock(item.id, this.userToken);
+		this.lock(item.id, this.userToken);
 
 	}, this));
 }
