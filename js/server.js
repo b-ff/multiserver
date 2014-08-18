@@ -28,6 +28,28 @@ Server.prototype.getUserToken = function() {
 	return token;
 }
 
+Server.prototype.getMaxId = function() {
+	var maxId = 0;
+
+	for (var i = 0; i < this.data.length; i++) {
+		if (this.data[i].id > maxId) { maxId = this.data[i].id; }
+	};
+
+	return maxId;
+}
+
+// Бронирует следующий после максимального порядковый ID элемента
+Server.prototype.reserveId = function() {
+	var newId = this.getMaxId() + 1;
+	this.data.push({ 
+		id: newId, 
+		name: 'RESERVED',
+		position: 'RESERVED'
+	});
+
+	return newId;
+}
+
 // Метод аля jQuery для навешивания обработчиков на события сервера
 Server.prototype.on = function(eventType, callback) {
 	// Если указан правильный эвент и переданный обработчик является функцией
@@ -76,14 +98,29 @@ Server.prototype.getList = function() {
 	return this.data.slice(0);
 };
 
+
+// Получить индекс элемента в базе по его ID
+Server.prototype.getListIndexById = function(id) {
+	for (var i = 0; i < this.data.length; i++) {
+		if (this.data[i].id == id) { return i; }
+	};
+}
+
 // Метод для добавления элементов на сервере
 Server.prototype.create = function(data, userToken) {
 	
+	if (typeof data == 'undefined' || data.length == 0) { return false; }
+
 	this.info("Server: create task runned!");
 
 	/*
 	 *	Тут происходит уход запроса на сервер...
 	 */
+
+	for (var i = 0; i < data.length; i++) {
+		var DBIndex = this.getListIndexById(data[i].id);
+		this.data[DBIndex] = data[i];
+	};
 
 	// Вызываем пользовательские обработчики для события
 	this.triggerEvent('create', data);
@@ -91,6 +128,8 @@ Server.prototype.create = function(data, userToken) {
 
 // Метод для обновления элементов на сервере
 Server.prototype.update = function(data, userToken) {
+
+	if (typeof data == 'undefined' || data.length == 0) { return false; }
 	
 	this.info("Server: update task runned!");
 
@@ -101,6 +140,8 @@ Server.prototype.update = function(data, userToken) {
 	for (var i = 0; i < data.length; i++) {
 		this.info("Server: unlocking element "+data[i].id);
 		this.unlock(data[i].id, userToken);
+		var DBIndex = this.getListIndexById(data[i].id);
+		this.data[DBIndex] = data[i];
 	};
 
 	// Вызываем пользовательские обработчики для события
@@ -109,6 +150,8 @@ Server.prototype.update = function(data, userToken) {
 
 // Метод для удаления элементов на сервере
 Server.prototype.delete = function(data, userToken) {
+
+	if (typeof data == 'undefined' || data.length == 0) { return false; }
 	
 	this.info("Server: delete task runned!");
 
@@ -116,12 +159,16 @@ Server.prototype.delete = function(data, userToken) {
 	 *	Тут происходит уход запроса на сервер...
 	 */
 
+
+
 	// Вызываем пользовательские обработчики для события
 	this.triggerEvent('delete', data);
 }
 
 // Метод для блокировки элементов на сервере
 Server.prototype.lock = function(item_id, user_token) {
+
+	if (typeof item_id == 'undefined') { return false; }
 	
 	this.info("Server: lock task runned!");
 
@@ -145,6 +192,8 @@ Server.prototype.lock = function(item_id, user_token) {
 // Метод для блокировки элементов на сервере
 Server.prototype.unlock = function(item_id, user_token) {
 	
+	if (typeof item_id == 'undefined') { return false; }
+
 	this.info("Server: unlock task runned!");
 
 	/*

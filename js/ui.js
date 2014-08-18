@@ -26,6 +26,15 @@
 		}
 	});
 
+	// Принудительно рефрешим список элементов на серваке с интервалом в секунду
+	setInterval(function() {
+		Users.server.load();
+		Users.server.container.find("tbody").empty();
+		Users.server.renderList();
+		Users.server.attachHandlers();	
+		Users.server.info("Server data refreshed");	
+	}, 1000);
+
 	// Обработчик нажатия кнопки добавления нового элемента списка
 	$(".btn.add").on("click", function(event) {
 

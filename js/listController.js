@@ -70,24 +70,32 @@ ListController.prototype.renderItemProperty = function(name, value) {
 	return '<td class="property property-' + name + ((value == '') ? ' empty' : '') + '" data-property-name="' + name + '">' + value + '</td>';
 }
 
+ListController.prototype.renderRow = function(item, num) {
+	var numClass = (typeof num != "undefined") ? ' list-item-'+num : '';
+
+	var output ='<tr class="list-item' + numClass + ' list-item-id-' + item.id + '">';
+
+	for (property in item) {
+		output+=this.renderItemProperty(property, item[property]);
+	}
+
+	output+='<td class="actions">';
+	output+='<button class="edit btn btn-default glyphicon glyphicon-pencil"></button> ';
+	output+='<button class="delete btn btn-default glyphicon glyphicon-trash"></button>';
+	output+='</td>';
+
+	output+='</tr>';
+
+	return output;
+}
+
 // Рендерит список
 ListController.prototype.renderList = function() {
 	
 	var output = '';
 
 	for (var i = 0; i < this.buffer.length; i++) {
-		output+='<tr class="list-item list-item-' + i + ' list-item-id-' + this.buffer[i].id + '">';
-
-		for (property in this.buffer[i]) {
-			output+=this.renderItemProperty(property, this.buffer[i][property]);
-		}
-
-		output+='<td class="actions">';
-		output+='<button class="edit btn btn-default glyphicon glyphicon-pencil"></button> ';
-		output+='<button class="delete btn btn-default glyphicon glyphicon-trash"></button>';
-		output+='</td>';
-
-		output+='</tr>';
+		output += this.renderRow(this.buffer[i], i + 1);
 	}
 
 	this.container.find("tbody").empty().append(output);
@@ -244,18 +252,33 @@ ListController.prototype.updateItem = function(itemObject) {
 
 	// Если это мы редактировали элемент то шлём изменения в очередь и потом на сервер
 	if (row.hasClass("info")) {
-		// Добавляем ID элемента в очередь на удаление
+		// Добавляем ID элемента в очередь на обновление
 		this.updateQueue.push(itemObject);
 		// Запускаем таймер на отправку данных на сервер
 		this.timeout($.proxy(this.send, this), 5000);
 	}
 
-	row.removeClass("info");
+	this.resetNewLines();
+
+	row.removeClass("info").addClass("success");
 }
 
 // Создаёт новый элемент списка из полученного объекта
 ListController.prototype.createItem = function(itemObject) {
-	// ...
+	itemObject.id = this.server.reserveId();
+	// Получаем новый порядковый номер для создаваемой строки
+	var num = this.container.find("tbody").find(".list-item").size() + 1;
+	// Рендерим строку в списке
+	this.container.find("tbody").append(this.renderRow(itemObject, num));
+	// Помечаем её зелёнкой
+	this.getRowById(itemObject.id).addClass("success");
+
+	// Кладём новый элемент в буффер
+	this.buffer.push(itemObject);
+	// Добавляем ID элемента в очередь на создание
+	this.createQueue.push(itemObject);
+	// Запускаем таймер на отправку данных на сервер
+	this.timeout($.proxy(this.send, this), 5000);
 }
 
 // Обёртка для серверного метода блокировки элемента при редактировании
@@ -274,6 +297,13 @@ ListController.prototype.unlock = function(id) {
 	}
 }
 
+// Сбрасывает выделение недавно изменённых элементов списка
+ListController.prototype.resetNewLines = function() {
+	this.container.find(".list-item.success").removeClass("success");
+}
+
+
+
 // Метод предназначеный для навешивания обработчиков на элементы списка
 ListController.prototype.attachHandlers = function() {
 
@@ -290,59 +320,76 @@ ListController.prototype.attachHandlers = function() {
 
 	// Подписываемся на событие начала редактирования элемента на сервере
 	this.server.on('edit', $.proxy(function(item_id) {
-
 		var row = this.getRowById(item_id);
 		if (!row.hasClass("info")) {
 			row.addClass("warning");
 			row.find("button").addClass("disabled");
 		}
-
 	}, this));
 
 
 	// Подписываемся на событие окончания редактирования редактирования элемента на сервере
 	this.server.on('unlock', $.proxy(function(item_id) {
-
 		var row = this.getRowById(item_id);
-		
+		// Если строка помечена как заблокированная
 		if (row.hasClass("warning")) {
 			row.removeClass("warning");
 		}
-		
+		// Если строка помечена как заблокированная у автора
 		if (row.hasClass("info")) {
 			row.removeClass("info");
 		}
-
+		// Разблокируем кнопки
 		this.container.find(".list-item").not(".warning").find("button").removeClass("disabled");
+	}, this));
+
+	// Подписываемся на событие создания элемента
+	this.server.on('create', $.proxy(function(data) {
+		// Стираем зелёнку
+		this.resetNewLines();
+
+		this.info(this.container.attr("data-role") + ": trying to create those " + data.length + " elements:");
+		for (var i = 0; i < data.length; i++) {
+			if (!this.getRowById(data[i].id).size()) {
+				// Получаем новый порядковый номер для создаваемой строки
+				var num = this.container.find("tbody").find(".list-item").size() + 1;
+				// Рендерим строку в списке
+				this.container.find("tbody").append(this.renderRow(data[i], num));
+				// Помечаем её зелёнкой
+			}
+
+			this.getRowById(data[i].id).addClass("success");
+		};
 
 	}, this));
 
 	// Подписываемся на событие обновления элемента
 	this.server.on('update', $.proxy(function(data) {
+		// Стираем зелёнку
+		this.resetNewLines();
 
 		this.info(this.container.attr("data-role") + ": trying to update those " + data.length + " elements:");
 		for (var i = 0; i < data.length; i++) {
 			this.info(data[i]);
+			// Обновляем элемент списка
 			this.updateItem(data[i]);
+			// Мажем обновлённый элемент зелёнкой
+			this.getRowById(data[i].id).addClass("success");
 		};
-
 	}, this));
 
 	// Вешаем обработчик на кнопку списка
 	this.container.on("click", "button.delete", $.proxy(function(event) {
-
 		var button = this.container.find(event.currentTarget);
 		button.addClass("disabled");
 		var row = button.parent().parent();
 		var item = this.getItemByRow(row);
 
 		this.removeItem(item.id);
-
 	}, this));
 
 	// Вешаем обработчик на кнопку списка
 	this.container.on("click", "button.edit", $.proxy(function(event) {
-
 		var button = this.container.find(event.currentTarget);
 		var row = button.parent().parent();
 		var item = this.getItemByRow(row);
@@ -353,7 +400,6 @@ ListController.prototype.attachHandlers = function() {
 		this.edit(item);
 
 		this.lock(item.id, this.userToken);
-
 	}, this));
 }
 
